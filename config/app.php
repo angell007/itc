@@ -195,6 +195,15 @@ return [
         App\Providers\EventServiceProvider::class,
         App\Providers\RouteServiceProvider::class,
 
+        // Jrean\UserVerification\UserVerificationServiceProvider::class,
+        App\Providers\ComposerServiceProvider::class,
+        Collective\Html\HtmlServiceProvider::class,
+        Laracasts\Flash\FlashServiceProvider::class,
+        Intervention\Image\ImageServiceProvider::class,
+        Yajra\DataTables\DataTablesServiceProvider::class,
+        App\Providers\CustomConfigServiceProvider::class,
+        Anhskohbo\NoCaptcha\NoCaptchaServiceProvider::class,
+
     ],
 
     /*
@@ -210,6 +219,15 @@ return [
 
     'aliases' => Facade::defaultAliases()->merge([
         // 'ExampleClass' => App\Example\ExampleClass::class,
+        'ImgUploader' => App\Helpers\ImageUploadingHelper::class,
+        'Image' => Intervention\Image\Facades\Image::class,
+        'DataTables' => Yajra\DataTables\Facades\DataTables::class,
+        'APFrmErrHelp' => App\Helpers\AdminFormErrorHelper::class,
+        'APAuthHelp' => App\Helpers\AdminAuthorizationHelper::class,
+        'MiscHelper' => App\Helpers\MiscHelper::class,
+        'NoCaptcha' => Anhskohbo\NoCaptcha\Facades\NoCaptcha::class,
+        'UserVerification' => Jrean\UserVerification\Facades\UserVerification::class,
+
     ])->toArray(),
 
 ];
