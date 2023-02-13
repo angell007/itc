@@ -12,11 +12,9 @@ use Illuminate\Support\Facades\Request;
 use Illuminate\Support\Facades\Route;
 use Barryvdh\DomPDF\Facade as PDF;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Mail;
-
-use App\Http\Controllers\IndexController;
-
-
+use Illuminate\Support\Facades\Redirect;
 
 Route::get('/clear-cache', function () {
 
@@ -29,6 +27,62 @@ Route::get('/clear-cache', function () {
   return 'DONE'; //Return anything
 
 });
+
+Auth::routes();
+
+Route::get('/', 'IndexController@index')->name('index');
+Route::post('set-locale', 'IndexController@setLocale')->name('set.locale');
+Route::post('contratar_emp', 'documento_contratadoController@contrato');
+Route::post('rechazar_emp', 'documento_contratadoController@rechazar');
+Route::resource('admin/documento_contratado', 'documento_contratadoController');
+Route::resource('admin/documento_pasantias', 'documento_pasantiasController');
+Route::get('/reports', 'ReportController@showView')->name('reports');
+Route::post('/download/reports', 'ReportController@download')->name('download.reports');
+Route::get('/gestion-permisos', 'Admin\GestionController@gestionar')->name('gestion-permisos');
+Route::post('/save-permissions', 'Admin\GestionController@store')->name('save-permissions');
+Route::get('blog', 'BlogController@index')->name('blogs');
+Route::get('blog/search', 'BlogController@search')->name('blog-search');
+Route::get('blog/{slug}', 'BlogController@details')->name('blog-detail');
+Route::get('/blog/category/{blog}', 'BlogController@categories')->name('blog-category');
+Route::get('/company-change-message-status', 'CompanyMessagesController@change_message_status')->name('company-change-message-status');
+Route::get('/seeker-change-message-status', 'Job\SeekerSendController@change_message_status')->name('seeker-change-message-status');
+Route::get('/sitemap', 'SitemapController@index');
+Route::get('/sitemap/companies', 'SitemapController@companies');
+Route::get('/donwload-statictics-download',  'ExportController@download')->name('download');
+Route::get('/donwload-camara/{company?}',  'Company\CompanyController@download');
+Route::get('/donwload-camara-by-admin/{company?}',  'Admin\CompanyController@download');
+/* * ******** HomeController ************ */
+Route::get('home', 'HomeController@index')->name('home');
+Route::get('admin/banner', 'HomeController@banner')->name('banner');
+Route::post('admin/banner', 'HomeController@uploadBanner')->name('banner');
+Route::post('admin/banner-active', 'HomeController@activeBAnner')->name('banner-active');
+/* * ******** TypeAheadController ******* */
+Route::get('typeahead-currency_codes', 'TypeAheadController@typeAheadCurrencyCodes')->name('typeahead.currency_codes');
+/* * ******** FaqController ******* */
+Route::get('faq', 'FaqController@index')->name('faq');
+/* * ******** CronController ******* */
+Route::get('check-package-validity', 'CronController@checkPackageValidity');
+/* * ******** Verification ******* */
+Route::get('email-verification/error', 'Auth\RegisterController@getVerificationError')->name('email-verification.error');
+Route::get('email-verification/check/{token}', 'Auth\RegisterController@getVerification')->name('email-verification.check');
+Route::get('company-email-verification/error', 'Company\Auth\RegisterController@getVerificationError')->name('company.email-verification.error');
+Route::get('company-email-verification/check/{token}', 'Company\Auth\RegisterController@getVerification')->name('company.email-verification.check');
+Route::get('login/jobseeker/{provider}', 'Auth\LoginController@redirectToProvider');
+Route::get('login/jobseeker/{provider}/callback', 'Auth\LoginController@handleProviderCallback');
+Route::get('login/employer/{provider}', 'Company\Auth\LoginController@redirectToProvider');
+Route::get('login/employer/{provider}/callback', 'Company\Auth\LoginController@handleProviderCallback');
+Route::post('tinymce-image_upload-front', 'TinyMceController@uploadImage')->name('tinymce.image_upload.front');
+Route::get('cronjob/send-alerts', 'AlertCronController@index')->name('send-alerts');
+Route::post('subscribe-newsletter', 'SubscriptionController@getSubscription')->name('subscribe.newsletter');
+
+Route::get('get-list-trainings', 'Admin\AdminController@listTrainings')->name('get-list-trainings');
+Route::get('admin/list/trainings', 'Admin\AdminController@viewlistTrainings')->name('list.trainings');
+Route::get('admin/list/participants/{id}', 'Admin\AdminController@viewlistParticipants')->name('list.participants');
+Route::get('list/participants-all', 'Admin\AdminController@listParticipants')->name('get-list-participants');
+Route::get('list/participants-delete', 'Admin\AdminController@listParticipantsDelete')->name('list.participants-delete');
+
+Route::post('upload-participant', 'UserController@uploadParticipant')->name('upload-participant');
+
 
 
 Route::get('/pass', function (Request $request) {
@@ -95,9 +149,9 @@ Route::get('/send-mail', function (Request $request) {
 
   $data = ['estudiante' => $estudiante, 'empresa' => $empresa, 'formato' => $formato];
 
-  $pdf = \App::make('dompdf.wrapper');
+  $pdf = App::make('dompdf.wrapper');
   $pdf->setPaper("A4", "portrait");
-  $pdf = PDF::loadView('plantilla.base', compact('formato', 'empresa', 'estudiante'));
+  $pdf = Pdf::loadView('plantilla.base', compact('formato', 'empresa', 'estudiante'));
 
   Mail::send('plantilla.mail', $data, function ($message) use ($data, $pdf) {
 
@@ -116,75 +170,6 @@ Route::get('/send-mail', function (Request $request) {
 })->name('send-mail');
 
 $real_path = realpath(__DIR__) . DIRECTORY_SEPARATOR . 'front_routes' . DIRECTORY_SEPARATOR;
-
-
-/* * ******** IndexController ************ */
-
-// Route::get('/', [IndexController::class, 'index'])->name('index');
-
-Route::get('/', 'IndexController@index')->name('index');
-
-Route::post('set-locale', 'IndexController@setLocale')->name('set.locale');
-
-/* * ******** HomeController ************ */
-
-Route::get('home', 'HomeController@index')->name('home');
-
-Route::get('admin/banner', 'HomeController@banner')->name('banner');
-Route::post('admin/banner', 'HomeController@uploadBanner')->name('banner');
-Route::post('admin/banner-active', 'HomeController@activeBAnner')->name('banner-active');
-
-/* * ******** TypeAheadController ******* */
-
-Route::get('typeahead-currency_codes', 'TypeAheadController@typeAheadCurrencyCodes')->name('typeahead.currency_codes');
-
-/* * ******** FaqController ******* */
-
-Route::get('faq', 'FaqController@index')->name('faq');
-
-/* * ******** CronController ******* */
-
-Route::get('check-package-validity', 'CronController@checkPackageValidity');
-
-/* * ******** Verification ******* */
-
-Route::get('email-verification/error', 'Auth\RegisterController@getVerificationError')->name('email-verification.error');
-
-Route::get('email-verification/check/{token}', 'Auth\RegisterController@getVerification')->name('email-verification.check');
-
-Route::get('company-email-verification/error', 'Company\Auth\RegisterController@getVerificationError')->name('company.email-verification.error');
-
-Route::get('company-email-verification/check/{token}', 'Company\Auth\RegisterController@getVerification')->name('company.email-verification.check');
-
-/* * ***************************** */
-
-// Sociallite Start
-
-// OAuth Routes
-
-Route::get('login/jobseeker/{provider}', 'Auth\LoginController@redirectToProvider');
-
-Route::get('login/jobseeker/{provider}/callback', 'Auth\LoginController@handleProviderCallback');
-
-Route::get('login/employer/{provider}', 'Company\Auth\LoginController@redirectToProvider');
-
-Route::get('login/employer/{provider}/callback', 'Company\Auth\LoginController@handleProviderCallback');
-
-// Sociallite End
-
-/* * ***************************** */
-
-Route::post('tinymce-image_upload-front', 'TinyMceController@uploadImage')->name('tinymce.image_upload.front');
-
-
-
-Route::get('cronjob/send-alerts', 'AlertCronController@index')->name('send-alerts');
-
-
-
-Route::post('subscribe-newsletter', 'SubscriptionController@getSubscription')->name('subscribe.newsletter');
-
-
 
 /* * ******** OrderController ************ */
 
@@ -214,11 +199,6 @@ include_once($real_path . 'ajax.php');
 
 include_once($real_path . 'site_user.php');
 
-/* * ******** User Auth ************ */
-
-Auth::routes();
-
-/* * ******** Company Auth ************ */
 
 include_once($real_path . 'company_auth.php');
 
@@ -234,36 +214,6 @@ include_once($real_path . 'admin_auth.php');
 include_once($real_path . 'custom/files.php');
 
 
-// Route::get('/pruebas',  function () {
-//   return Hash::make('secret');
-// });
-
-
-Route::get('/reports', 'ReportController@showView')->name('reports');
-Route::post('/download/reports', 'ReportController@download')->name('download.reports');
-
-Route::get('/gestion-permisos', 'Admin\GestionController@gestionar')->name('gestion-permisos');
-Route::post('/save-permissions', 'Admin\GestionController@store')->name('save-permissions');
-
-Route::get('blog', 'BlogController@index')->name('blogs');
-
-Route::get('blog/search', 'BlogController@search')->name('blog-search');
-
-Route::get('blog/{slug}', 'BlogController@details')->name('blog-detail');
-
-Route::get('/blog/category/{blog}', 'BlogController@categories')->name('blog-category');
-
-Route::get('/company-change-message-status', 'CompanyMessagesController@change_message_status')->name('company-change-message-status');
-Route::get('/seeker-change-message-status', 'Job\SeekerSendController@change_message_status')->name('seeker-change-message-status');
-
-Route::get('/sitemap', 'SitemapController@index');
-
-Route::get('/sitemap/companies', 'SitemapController@companies');
-
-Route::get('/donwload-statictics-download',  'ExportController@download')->name('download');
-
-Route::get('/donwload-camara/{company?}',  'Company\CompanyController@download');
-Route::get('/donwload-camara-by-admin/{company?}',  'Admin\CompanyController@download');
 // Route::get('/donwload-cv/{company?}',  'Admin\CompanyController@download' );
 Route::get('/download-cv/{file?}/{title?}/{user}',  function ($a, $b, $c) {
 
@@ -278,10 +228,8 @@ Route::get('/download-cv/{file?}/{title?}/{user}',  function ($a, $b, $c) {
     }
   }
 });
+
 Route::get('/download-cv-on-candidate/{file?}/{user}/{jobs}',  function ($a, $c, $d) {
-
-
-
 
   if (Auth::guard('company')->check()) {
 
@@ -297,10 +245,3 @@ Route::get('/download-cv-on-candidate/{file?}/{user}/{jobs}',  function ($a, $c,
 
   abort(404);
 });
-
-
-Route::post('contratar_emp', 'documento_contratadoController@contrato');
-Route::post('rechazar_emp', 'documento_contratadoController@rechazar');
-
-Route::resource('admin/documento_contratado', 'documento_contratadoController');
-Route::resource('admin/documento_pasantias', 'documento_pasantiasController');

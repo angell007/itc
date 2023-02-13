@@ -1,11 +1,14 @@
 <?php
 
+use Illuminate\Support\Facades\Route;
+
 $all_users = ['allowed_roles' => ['SUP_ADM', 'SUB_ADM']];
 $sup_only = ['allowed_roles' => 'SUP_ADM'];
 Route::get('/home', array_merge(['uses' => 'Admin\HomeController@index'], $all_users))->name('admin.home');
 Route::post('tinymce-image_upload', array_merge(['uses' => 'Admin\TinyMceController@uploadImage'], $all_users))->name('tinymce.image_upload');
 /* * ********************************* */
 $real_path = realpath(__DIR__) . DIRECTORY_SEPARATOR . 'admin_routes' . DIRECTORY_SEPARATOR;
+
 include_once($real_path . 'admin_user.php');
 include_once($real_path . 'site_user.php');
 include_once($real_path . 'faq.php');

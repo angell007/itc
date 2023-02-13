@@ -1,6 +1,9 @@
 <?php
 
 /* * ******  Company Start ********** */
+
+use Illuminate\Support\Facades\Route;
+
 Route::get('list-companies', array_merge(['uses' => 'Admin\CompanyController@indexCompanies'], $all_users))->name('list.companies');
 Route::get('create-company', array_merge(['uses' => 'Admin\CompanyController@createCompany'], $all_users))->name('create.company');
 Route::post('store-company', array_merge(['uses' => 'Admin\CompanyController@storeCompany'], $all_users))->name('store.company');

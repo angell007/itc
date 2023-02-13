@@ -1,7 +1,6 @@
 <?php
 
-
-
+use Illuminate\Support\Facades\Route;
 
 Route::get('datos-export', 'Admin\AdminController@datosexport');
 
@@ -18,4 +17,3 @@ Route::get('fetch-admin-users', array_merge(['uses' => 'Admin\AdminController@fe
 
 Route::resource('template_contrato', 'template_contratoController');
 /* * ****** End Admin User ********** */
-?>

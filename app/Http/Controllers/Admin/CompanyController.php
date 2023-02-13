@@ -2,32 +2,22 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Hash;
-use File;
-use ImgUploader;
-use Auth;
-use DB;
-use Input;
-use Redirect;
+use App\Helpers\ImageUploadingHelper;
 use App\Package;
 use App\Company;
-use App\Country;
-use App\State;
-use App\City;
-use App\Industry;
-use App\OwnershipType;
-use Carbon\Carbon;
-use App\Helpers\MiscHelper;
 use App\Helpers\DataArrayHelper;
-use App\Http\Requests;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use DataTables;
 use App\Http\Requests\CompanyFormRequest;
 use App\Http\Controllers\Controller;
 use App\Traits\CompanyTrait;
 use App\Traits\CompanyPackageTrait;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Redirect;
 use Illuminate\Support\Str;
+use Yajra\DataTables\Facades\DataTables as FacadesDataTables;
 
 class CompanyController extends Controller
 {
@@ -63,13 +53,13 @@ class CompanyController extends Controller
             ->with('ownershipTypes', $ownershipTypes)
             ->with('packages', $packages);
     }
-    
-     public function download($company)
+
+    public function download($company)
     {
-        
-        if(Auth::guard('admin')->user() != null){
+
+        if (Auth::guard('admin')->user() != null) {
             $c = Company::findOrFail($company);
-                return response()->download($c->camara_comercio);
+            return response()->download($c->camara_comercio);
         }
         flash('Error, No puedes acceder a este archivo')->error();
         return redirect()->back();
@@ -82,7 +72,7 @@ class CompanyController extends Controller
         /*         * **************************************** */
         if ($request->hasFile('logo')) {
             $image = $request->file('logo');
-            $fileName = ImgUploader::UploadImage('company_logos', $image, $request->input('name'), 300, 300, false);
+            $fileName = ImageUploadingHelper::UploadImage('company_logos', $image, $request->input('name'), 300, 300, false);
             $company->logo = $fileName;
         }
         /*         * ************************************** */
@@ -127,7 +117,7 @@ class CompanyController extends Controller
         }
         /*         * ************************************ */
         flash('Empresa has been added!')->success();
-        return \Redirect::route('edit.company', array($company->id));
+        return Redirect::route('edit.company', array($company->id));
     }
 
     public function editCompany($id)
@@ -154,26 +144,31 @@ class CompanyController extends Controller
 
     public function updateCompany($id, CompanyFormRequest $request)
     {
-        
-         $url = '';
-       
-       
-         
+
+        $url = '';
+
         $company = Company::findOrFail($id);
         /*         * **************************************** */
         if ($request->hasFile('logo')) {
-            $is_deleted = $this->deleteCompanyLogo($company->id);
-            $image = $request->file('logo');
-            $fileName = ImgUploader::UploadImage('company_logos', $image, $request->input('name'), 300, 300, false);
-            $company->logo = $fileName;
+            try {
+                $this->deleteCompanyLogo($company->id);
+                $image = $request->file('logo');
+                $fileName = ImageUploadingHelper::UploadImage('company_logos', $image, $request->input('name'), 300, 300, true);
+                $company->logo = $fileName;
+            } catch (\Throwable $th) {
+                dd($th->getMessage(), $th->getFile(), $th->getLine());
+            }
         }
-       if(request()->hasFile('camara_comercio')){
-          $file = $request->file('camara_comercio');
-        $destinationPath = 'uploads';
-        $file->move($destinationPath,$file->getClientOriginalName());
-        $url= $destinationPath.'/'.$file->getClientOriginalName();
-        $company->camara_comercio = $url;
-       }
+
+
+        if ($request->hasFile('camara_comercio')) {
+            $file = $request->file('camara_comercio');
+            $destinationPath = 'uploads';
+            $file->move($destinationPath, $file->getClientOriginalName());
+            $url = $destinationPath . '/' . $file->getClientOriginalName();
+            $company->camara_comercio = $url;
+        }
+
         /*         * ************************************** */
         $company->name = $request->input('name');
         $company->email = $request->input('email');
@@ -220,7 +215,7 @@ class CompanyController extends Controller
         }
         /*         * ************************************ */
         flash('Empresa ha sido actualizada!')->success();
-        return \Redirect::route('edit.company', array($company->id));
+        return Redirect::route('edit.company', array($company->id));
     }
 
     public function deleteCompany(Request $request)
@@ -263,7 +258,7 @@ class CompanyController extends Controller
             'companies.camara_comercio',
         ]);
 
-        return Datatables::of($companies)
+        return FacadesDataTables::of($companies)
             ->filter(function ($query) use ($request) {
                 if ($request->has('name') && !empty($request->name)) {
                     $query->where('companies.name', 'like', "%{$request->get('name')}%");
@@ -327,13 +322,13 @@ class CompanyController extends Controller
 				</div>';
             })
             ->addColumn('camara_comercio', function ($companies) {
-                if($companies->camara_comercio != '' && $companies->camara_comercio != null){
-                //   return '<a target="_blank" href=../'.str_replace(" ", "%20", $companies->camara_comercio).' >'.explode("/",$companies->camara_comercio)[1].'</a';
-                  return '<a href="'. url('donwload-camara-by-admin',$companies->id) .'">Camara de comercio</a>';
+                if ($companies->camara_comercio != '' && $companies->camara_comercio != null) {
+                    //   return '<a target="_blank" href=../'.str_replace(" ", "%20", $companies->camara_comercio).' >'.explode("/",$companies->camara_comercio)[1].'</a';
+                    return '<a href="' . url('donwload-camara-by-admin', $companies->id) . '">Camara de comercio</a>';
                 }
                 return 'sin documento subido';
             })
-            ->rawColumns(['action', 'is_active', 'is_featured','camara_comercio'])
+            ->rawColumns(['action', 'is_active', 'is_featured', 'camara_comercio'])
             ->setRowId(function ($companies) {
                 return 'companyDtRow' . $companies->id;
             })

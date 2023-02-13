@@ -2,35 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Auth;
-use DB;
-use Input;
-use File;
+use App\Helpers\ImageUploadingHelper;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\UploadedFile;
-use ImgUploader;
-use Carbon\Carbon;
-use Redirect;
-use Newsletter;
 use App\User;
 use App\Subscription;
 use App\ApplicantMessage;
 use App\Company;
 use App\FavouriteCompany;
-use App\Gender;
-use App\MaritalStatus;
-use App\Country;
-use App\State;
-use App\City;
-use App\JobExperience;
-use App\JobApply;
-use App\CareerLevel;
-use App\Industry;
 use App\Alert;
-use App\FunctionalArea;
-use App\Http\Requests;
 use Illuminate\Http\Request;
-use Illuminate\Database\Eloquent\ModelNotFoundException;
 use App\Http\Controllers\Controller;
 use App\Traits\CommonUserFunctions;
 use App\Traits\ProfileSummaryTrait;
@@ -43,6 +24,9 @@ use App\Traits\ProfileLanguageTrait;
 use App\Traits\Skills;
 use App\Http\Requests\Front\UserFrontFormRequest;
 use App\Helpers\DataArrayHelper;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redirect;
 
 class UserController extends Controller
 {
@@ -75,10 +59,10 @@ class UserController extends Controller
         $profileCv = $user->getDefaultCv();
 
         return view('user.applicant_profile')
-                        ->with('user', $user)
-                        ->with('profileCv', $profileCv)
-                        ->with('page_title', $user->getName())
-                        ->with('form_title', 'Contact ' . $user->getName());
+            ->with('user', $user)
+            ->with('profileCv', $profileCv)
+            ->with('page_title', $user->getName())
+            ->with('form_title', 'Contact ' . $user->getName());
     }
 
     public function myProfile()
@@ -95,16 +79,16 @@ class UserController extends Controller
         $upload_max_filesize = UploadedFile::getMaxFilesize() / (1048576);
         $user = User::findOrFail(Auth::user()->id);
         return view('user.edit_profile')
-                        ->with('genders', $genders)
-                        ->with('maritalStatuses', $maritalStatuses)
-                        ->with('nationalities', $nationalities)
-                        ->with('countries', $countries)
-                        ->with('jobExperiences', $jobExperiences)
-                        ->with('careerLevels', $careerLevels)
-                        ->with('industries', $industries)
-                        ->with('functionalAreas', $functionalAreas)
-                        ->with('user', $user)
-                        ->with('upload_max_filesize', $upload_max_filesize);
+            ->with('genders', $genders)
+            ->with('maritalStatuses', $maritalStatuses)
+            ->with('nationalities', $nationalities)
+            ->with('countries', $countries)
+            ->with('jobExperiences', $jobExperiences)
+            ->with('careerLevels', $careerLevels)
+            ->with('industries', $industries)
+            ->with('functionalAreas', $functionalAreas)
+            ->with('user', $user)
+            ->with('upload_max_filesize', $upload_max_filesize);
     }
 
     public function updateMyProfile(UserFrontFormRequest $request)
@@ -114,7 +98,7 @@ class UserController extends Controller
         if ($request->hasFile('image')) {
             $is_deleted = $this->deleteUserImage($user->id);
             $image = $request->file('image');
-            $fileName = ImgUploader::UploadImage('user_images', $image, $request->input('name'), 300, 300, false);
+            $fileName = ImageUploadingHelper::UploadImage('user_images', $image, $request->input('name'), 300, 300, false);
             $user->image = $fileName;
         }
         /*         * ************************************** */
@@ -147,34 +131,31 @@ class UserController extends Controller
         $user->expected_salary = $request->input('expected_salary');
         $user->salary_currency = $request->input('salary_currency');
         $user->street_address = $request->input('street_address');
-		$user->is_subscribed = $request->input('is_subscribed', 0);
-		
+        $user->is_subscribed = $request->input('is_subscribed', 0);
+
         $user->update();
 
         $this->updateUserFullTextSearch($user);
-		/*************************/
-		Subscription::where('email', 'like', $user->email)->delete();
-		
-		if((bool)$user->is_subscribed)
-		{			
-			$subscription = new Subscription();
-			$subscription->email = $user->email;
-			$subscription->name = $user->name;
-			$subscription->save();
-			
-			/*************************/
-// 			Newsletter::subscribeOrUpdate($subscription->email, ['FNAME'=>$subscription->name]);
-			/*************************/
-		}
-		else
-		{
-			/*************************/
-// 			Newsletter::unsubscribe($user->email);
-			/*************************/
-		}
-		
+        /*************************/
+        Subscription::where('email', 'like', $user->email)->delete();
+
+        if ((bool)$user->is_subscribed) {
+            $subscription = new Subscription();
+            $subscription->email = $user->email;
+            $subscription->name = $user->name;
+            $subscription->save();
+
+            /*************************/
+            // 			Newsletter::subscribeOrUpdate($subscription->email, ['FNAME'=>$subscription->name]);
+            /*************************/
+        } else {
+            /*************************/
+            // 			Newsletter::unsubscribe($user->email);
+            /*************************/
+        }
+
         flash(__('You have updated your profile successfully'))->success();
-        return \Redirect::route('my.profile');
+        return Redirect::route('my.profile');
     }
 
     public function addToFavouriteCompany(Request $request, $company_slug)
@@ -183,7 +164,7 @@ class UserController extends Controller
         $data['user_id'] = Auth::user()->id;
         $data_save = FavouriteCompany::create($data);
         flash(__('Company has been added in favorites list'))->success();
-        return \Redirect::route('company.detail', $company_slug);
+        return Redirect::route('company.detail', $company_slug);
     }
 
     public function removeFromFavouriteCompany(Request $request, $company_slug)
@@ -192,7 +173,7 @@ class UserController extends Controller
         FavouriteCompany::where('company_slug', 'like', $company_slug)->where('user_id', $user_id)->delete();
 
         flash(__('Company has been removed from favorites list'))->success();
-        return \Redirect::route('company.detail', $company_slug);
+        return Redirect::route('company.detail', $company_slug);
     }
 
     public function myFollowings()
@@ -202,21 +183,21 @@ class UserController extends Controller
         $companies = Company::whereIn('slug', $companiesSlugArray)->get();
 
         return view('user.following_companies')
-                        ->with('user', $user)
-                        ->with('companies', $companies);
+            ->with('user', $user)
+            ->with('companies', $companies);
     }
 
     public function myMessages()
     {
         $user = User::findOrFail(Auth::user()->id);
         $messages = ApplicantMessage::where('user_id', '=', $user->id)
-                ->orderBy('is_read', 'asc')
-                ->orderBy('created_at', 'desc')
-                ->get();
+            ->orderBy('is_read', 'asc')
+            ->orderBy('created_at', 'desc')
+            ->get();
 
         return view('user.applicant_messages')
-                        ->with('user', $user)
-                        ->with('messages', $messages);
+            ->with('user', $user)
+            ->with('messages', $messages);
     }
 
     public function applicantMessageDetail($message_id)
@@ -226,8 +207,8 @@ class UserController extends Controller
         $message->update(['is_read' => 1]);
 
         return view('user.applicant_message_detail')
-                        ->with('user', $user)
-                        ->with('message', $message);
+            ->with('user', $user)
+            ->with('message', $message);
     }
 
     public function myAlerts()
@@ -246,22 +227,28 @@ class UserController extends Controller
         $arr = array('msg' => 'A Alert has been successfully deleted. ', 'status' => true);
         return Response()->json($arr);
     }
-    
+
     public function changePass()
     {
-       $user = User::find(request()->get('id'));
-       
-       if(Hash::check(request()->get('pass'), $user->password)){
-           
-           $user->password = Hash::make(request()->get('repass'));
-           $user->save();
-           $arr = array('msg' => 'Contraseña actualizada correctamente ', 'status' => true);
-           return Response()->json($arr);
-           
-       }
-       
-       $arr = array('msg' => 'La contraseña no coincide con tu contraseña actual ', 'status' => true);
-       return Response()->json($arr, 400);
+        $user = User::find(request()->get('id'));
+
+        if (Hash::check(request()->get('pass'), $user->password)) {
+
+            $user->password = Hash::make(request()->get('repass'));
+            $user->save();
+            $arr = array('msg' => 'Contraseña actualizada correctamente ', 'status' => true);
+            return Response()->json($arr);
+        }
+
+        $arr = array('msg' => 'La contraseña no coincide con tu contraseña actual ', 'status' => true);
+        return Response()->json($arr, 400);
     }
 
+
+
+    public function  uploadParticipant()
+    {
+        DB::table('participants')->insertGetId(request()->get('data'));
+        return Response()->json(request()->all(), 200);
+    }
 }

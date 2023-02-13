@@ -9,12 +9,24 @@ use Carbon\Carbon;
 
 class CompanysExport implements FromView
 {
+
+
+    protected $data;
+
+    public function __construct($data)
+
+    {
+
+        $this->data = $data;
+    }
+
+
     public function view(): View
     {
-         $today = Carbon::now();
-         
-         $Company = Company::whereMonth('created_at',  $today->month)->get();
-         
+        $today = Carbon::now();
+
+        $Company = Company::whereMonth('created_at',  $today->month)->get();
+
         return view('export.staticticscompany', [
             'companys' => $Company
         ]);

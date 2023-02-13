@@ -2,25 +2,20 @@
 
 namespace App\Http\Controllers\Admin;
 
-use Config;
-// use Auth;
-use DB;
 use App\Admin;
-use App\Http\Requests;
 use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use DataTables;
 use App\Role;
 use App\Http\Requests\AdminFormRequest;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Password;
 use App\Http\Controllers\Controller;
-use Carbon\Carbon;
 use App\Exports\DatosExport;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Redirect;
 use Maatwebsite\Excel\Facades\Excel;
+use Yajra\DataTables\Facades\DataTables;
 
 class AdminController extends Controller
 {
@@ -35,11 +30,6 @@ class AdminController extends Controller
         //
     }
 
-    /**
-     * Show the application dashboard.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function indexAdminUsers()
     {
         return view('admin.admin.index');
@@ -47,19 +37,12 @@ class AdminController extends Controller
 
     public function datosexport(request $request)
     {
-
         return Excel::download(new DatosExport($request->a, $request->b), 'datos.xlsx');
-
-        // return (new InvoicesExport)->view($request->data->a,$request->data->b)->download('invoices.xlsx');
     }
 
     public function createAdminUser()
     {
         $roles = Role::select('role_name', 'id')->orderBy('role_name')->pluck('role_name', 'id')->toArray();
-        /*
-          print_r($roles);
-          print_r(['0' => 'Select a Role']+$roles);exit;
-         */
         return view('admin.admin.create')->with('roles', $roles);
     }
 
@@ -78,7 +61,7 @@ class AdminController extends Controller
         });
         /*         * ******************** */
         flash('New Admin User has been created!')->success();
-        return \Redirect::route('edit.admin.user', array($user->id));
+        return Redirect::route('edit.admin.user', array($user->id));
     }
 
     public function editAdminUser($id)
@@ -99,12 +82,12 @@ class AdminController extends Controller
         $user->role_id = $request->role_id;
         $user->save();
         flash('Admin User has been updated!')->success();
-        return \Redirect::route('edit.admin.user', array($user->id));
+        return Redirect::route('edit.admin.user', array($user->id));
     }
 
     public function deleteAdminUser(Request $request)
     {
-        
+
         if ($this->notCurrentUser($request->get('id'))) {
             $id = $request->input('id');
             try {
@@ -122,7 +105,7 @@ class AdminController extends Controller
     {
         $users = Admin::join('roles', 'admins.role_id', '=', 'roles.id')
             ->select('admins.id', 'admins.name', 'admins.email', 'roles.role_name');
-        return Datatables::of($users)
+        return DataTables::of($users)
             ->addColumn('action', function ($user) {
                 return '<a href="' . route('edit.admin.user', ['id' => $user->id]) . '" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-edit"></i> Edit</a><a href="javascript:void(0);" onclick="delete_user(' . $user->id . ');" class="btn btn-xs btn-danger"><i class="glyphicon glyphicon-remove"></i> Delete</a>';
             })
@@ -139,5 +122,52 @@ class AdminController extends Controller
             return false;
         }
         return true;
+    }
+
+
+
+    public function viewlistTrainings()
+    {
+        return view('admin.trainings.index');
+    }
+
+
+
+    public function viewlistParticipants($id)
+
+    {
+        return view('admin.trainings.participants', compact('id'));
+    }
+
+    public function listTrainings()
+    {
+        $trainings = DB::table('trainings')->select('*');
+        return Datatables::of($trainings)
+            ->addColumn('action', function ($trainings) {
+                return
+                    '<a href="' . route('list.participants', ['id' => $trainings->id]) . '" class="btn btn-xs btn-primary"><i class="glyphicon glyphicon-edit"></i> Detalle </a>' .
+                    '<a href="javascript:void(0);" onclick="delete_training(' . $trainings->id . ');" class="btn btn-xs btn-danger"><i class="glyphicon glyphicon-remove"></i> Delete</a';
+            })
+
+            ->make(true);
+    }
+
+    public function listParticipants()
+    {
+        $participants = DB::table('participants')->select('*')->where('trainings_id', request()->get('id'));
+        return Datatables::of($participants)
+            ->addColumn('action', function ($participant) {
+                return '<a href="' . route('list.participants-delete', ['id' => $participant->id]) . '" class="btn btn-xs btn-danger"><i class="glyphicon glyphicon-trash"></i> Eliminar </a>';
+            })
+
+            ->make(true);
+    }
+
+
+
+    public function listParticipantsDelete()
+    {
+        DB::table('participants')->delete(request()->get('id'));
+        return back();
     }
 }

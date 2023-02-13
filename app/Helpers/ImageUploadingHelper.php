@@ -2,11 +2,9 @@
 
 namespace App\Helpers;
 
-use Request;
-use Image;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
+use Intervention\Image\Facades\Image;
+
 class ImageUploadingHelper
 {
 
@@ -23,36 +21,43 @@ class ImageUploadingHelper
 
     public static function UploadImage($destinationPath, $field, $newName = '', $width = 0, $height = 0, $makeOtherSizesImages = true)
     {
-        if ($width > 0 && $height > 0) {
-            self::$mainImgWidth = $width;
-            self::$mainImgHeight = $height;
-        }
-        $destinationPath = ImageUploadingHelper::real_public_path() . $destinationPath;
-        $midImagePath = $destinationPath . self::$midFolder;
-        $thumbImagePath = $destinationPath . self::$thumbFolder;
-        $extension = $field->getClientOriginalExtension();
-        $fileName = Str::slug($newName, '-') . '-' . time() . '-' . rand(1, 999) . '.' . $extension;
-        $field->move($destinationPath, $fileName);
-        /*         * **** Resizing Images ******** */
-        $imageToResize = Image::make($destinationPath . '/' . $fileName);
-        $imageToResize->resize(self::$mainImgWidth, self::$mainImgHeight, function ($constraint) {
-            $constraint->aspectRatio();
-            $constraint->upsize();
-        })->save($destinationPath . '/' . $fileName);
-        if ($makeOtherSizesImages === true) {
-            $imageToResize->resize(self::$midImgWidth, self::$midImgHeight, function ($constraint) {
+
+        try {
+            if ($width > 0 && $height > 0) {
+                self::$mainImgWidth = $width;
+                self::$mainImgHeight = $height;
+            }
+            $destinationPath = ImageUploadingHelper::real_public_path() . $destinationPath;
+            $midImagePath = $destinationPath . self::$midFolder;
+            $thumbImagePath = $destinationPath . self::$thumbFolder;
+            $extension = $field->getClientOriginalExtension();
+            $fileName = Str::slug($newName, '-') . '-' . time() . '-' . rand(1, 999) . '.' . $extension;
+            $field->move($destinationPath, $fileName);
+            /*         * **** Resizing Images ******** */
+
+            $imageToResize = Image::make($destinationPath . '/' . $fileName);
+
+            $imageToResize->resize(self::$mainImgWidth, self::$mainImgHeight, function ($constraint) {
                 $constraint->aspectRatio();
                 $constraint->upsize();
-            })->save($midImagePath . '/' . $fileName);
-            $imageToResize->resize(self::$thumbImgWidth, self::$thumbImgHeight, function ($constraint) {
-                $constraint->aspectRatio();
-                $constraint->upsize();
-            })->save($thumbImagePath . '/' . $fileName);
-            /*             * **** End Resizing Images ******** */
+            })->save($destinationPath . '/' . $fileName);
+
+            if ($makeOtherSizesImages === true) {
+                $imageToResize->resize(self::$midImgWidth, self::$midImgHeight, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                })->save($midImagePath . '/' . $fileName);
+
+                $imageToResize->resize(self::$thumbImgWidth, self::$thumbImgHeight, function ($constraint) {
+                    $constraint->aspectRatio();
+                    $constraint->upsize();
+                })->save($thumbImagePath . '/' . $fileName);
+            }
+
+            return $fileName;
+        } catch (\Throwable $th) {
+            dd($th->getMessage(), $th->getFile(), $th->getLine());
         }
-        
-        // dd([$thumbImagePath, $midImagePath, $destinationPath,  $fileName]);
-        return $fileName;
     }
 
     public static function UploadDoc($destinationPath, $field, $newName = '')
@@ -135,7 +140,7 @@ class ImageUploadingHelper
 
     public static function get_image($image_path, $width = 0, $height = 0, $default_image = '/admin_assets/no-image.png', $alt_title_txt = '')
     {
-		$dimensions = '';
+        $dimensions = '';
         if ($width > 0 && $height > 0) {
             $dimensions = 'style="max-width=' . $width . 'px; max-height:' . $height . 'px;"';
         } elseif ($width > 0 && $height == 0) {
@@ -143,13 +148,13 @@ class ImageUploadingHelper
         } elseif ($width == 0 && $height > 0) {
             $dimensions = 'style="max-height:' . $height . 'px;"';
         }
-		$image_src = self::print_image_src($image_path, $width, $height, $default_image, $alt_title_txt);
-		      //  dd($image_src);
+        $image_src = self::print_image_src($image_path, $width, $height, $default_image, $alt_title_txt);
+        //  dd($image_src);
 
         return '<img src="' . $image_src . '" ' . $dimensions . ' alt="' . $alt_title_txt . '" title="' . $alt_title_txt . '">';
     }
-	
-	public static function print_image_src($image_path, $width = 0, $height = 0, $default_image = '/admin_assets/no-image.png', $alt_title_txt = '')
+
+    public static function print_image_src($image_path, $width = 0, $height = 0, $default_image = '/admin_assets/no-image.png', $alt_title_txt = '')
     {
         if (!empty($image_path)) {
             return ImageUploadingHelper::public_path() . $image_path;
@@ -186,16 +191,11 @@ class ImageUploadingHelper
 
     public static function public_path()
     {
-        
-        // /home/itc/public_html/bolsadeempleo/main/public/company_logos/custom-1616138705-613.jpeg
-        // return public_path() . DIRECTORY_SEPARATOR;
         return url('/') . DIRECTORY_SEPARATOR;
-        // return url('/main/public/') . DIRECTORY_SEPARATOR;
     }
 
     public static function real_public_path()
     {
         return public_path() . DIRECTORY_SEPARATOR;
     }
-
 }

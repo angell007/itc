@@ -41,22 +41,19 @@ class CompanyFormRequest extends Request
                         "ownership_type_id" => "required",
                         "description" => "required",
                         "location" => "required",
-                        //"map" => "required",
-                        // "no_of_offices" => "required",
-                        // "website" => "required|url",
                         "no_of_employees" => "required",
                         "established_in" => "required",
-                        // "fax" => "required",
                         "phone" => "required",
-                        "logo" => $logo,
                         "country_id" => "required",
                         "state_id" => "required",
                         "city_id" => "required",
                         "is_active" => "required",
                         "is_featured" => "required",
+                        "logo" => 'mimes:jpeg,png|max:512'
                     ];
                 }
-            default:break;
+            default:
+                break;
         }
     }
 
@@ -87,5 +84,4 @@ class CompanyFormRequest extends Request
             'is_featured.required' => 'Is this Company featured?',
         ];
     }
-
 }
