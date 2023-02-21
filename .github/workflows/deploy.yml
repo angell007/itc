@@ -17,4 +17,4 @@ jobs:
         port: 2727
         username: soporte
         password: HD36I7NQ
-        remote_path: /var/www/test-bolsadeempleo
+        remote_path: /home/soporte/itc
