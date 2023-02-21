@@ -17,5 +17,4 @@ jobs:
         port: 2727
         username: soporte
         password: HD36I7NQ
-        remote_dir: /var/www/test-bolsadeempleo
-        exclude: '.*'
+        remote_path: /var/www/test-bolsadeempleo
