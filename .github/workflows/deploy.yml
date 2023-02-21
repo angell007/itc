@@ -1,0 +1,21 @@
+on: 
+  push:
+    branches:
+      - dev
+name: 🚀 Deploy website on push
+jobs:
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest
+    steps:
+    - name: 🚚 Get latest code
+      uses: actions/checkout@v3
+    - name: 📂 Sync files
+      uses: SamKirkland/sftp-sync-deploy@3.0.0
+      with:
+        server: 186.30.166.150
+        port: 2727
+        username: soporte
+        password: HD36I7NQ
+        remote_dir: /var/www/test-bolsadeempleo
+        exclude: '.*'
