@@ -46,9 +46,9 @@ require __DIR__.'/main/vendor/autoload.php';
 
 $app = require_once __DIR__.'/main/bootstrap/app.php';
 
-$app->bind('path.public',function(){
-    return __DIR__;
-    });
+// $app->bind('path.public',function(){
+//     return __DIR__;
+//     });
     
     
 $kernel = $app->make(Kernel::class);
