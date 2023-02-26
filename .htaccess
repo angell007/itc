@@ -13,16 +13,16 @@
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
     
     # Aquí especifica ext |
-    # <Files ~ "\.(env|json|config.js|md|gitignore|gitattributes|lock|txt)$">
-    #     Order allow,deny
-    #     Deny from all
-    # </Files>
+    <Files ~ "\.(env|json|config.js|md|gitignore|gitattributes|lock|txt)$">
+        Order allow,deny
+        Deny from all
+    </Files>
     
     # Aquí especifica nombres |
-    # <Files ~ "(artisan)$">
-    #     Order allow,deny
-    #     Deny from all
-    # </Files>
+    <Files ~ "(artisan)$">
+        Order allow,deny
+        Deny from all
+    </Files>
 
 
     # Redirect Trailing Slashes If Not A Folder...
@@ -33,5 +33,5 @@
     # Send Requests To Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
-    RewriteRule ^(.*)$ public/$1 [L]
+    RewriteRule ^ index.php [L]
 </IfModule>
