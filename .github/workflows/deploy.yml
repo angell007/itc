@@ -1,18 +1,16 @@
-name: Deploy to Server ITC
-
 on:
-  workflow_dispatch:
-  push:
+ workflow_dispatch:
+ push:
     branches:
       - deploy
+name: "\U0001F680 Deploy website on push"
 jobs: 
-  deploy:
+  web-deploy:
     name: "\U0001F389 Deploy"
     runs-on: ubuntu-latest
     steps:
-    - name: Checkout code
-    - uses: actions/checkout@v3
-
+    - name: "\U0001F69A Get latest code"
+      uses: actions/checkout@v3
     - name: "\U0001F4C2 Sync files"
       uses: wlixcc/SFTP-Deploy-Action@v1.2.4
       with:
@@ -21,9 +19,6 @@ jobs:
         username: soporte
         password: HD36I7NQ
         remote_path: /home/soporte/itc
-    - uses: shivammathur/setup-php@15c43e89cdef867065b0213be354c2841860869e
-      with:
-        php-version: '8.1'
 
     - name: Install Dependencies
       run: composer install -q --no-ansi --no-interaction --no-scripts --no-progress --prefer-dist
@@ -36,3 +31,4 @@ jobs:
 
     - name: Generate key
       run: php artisan key:generate
+        
